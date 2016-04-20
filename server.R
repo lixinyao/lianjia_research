@@ -16,6 +16,6 @@ server = function(input,output){
   output$table = DT::renderDataTable(DT::datatable({
     data = mydata
     data = subset(data,select=input$indicators)
-    data = subset(data,data$录入时间==input$dates)
+    data = subset(data,data$录入时间2==input$dates)
   }))
 }
