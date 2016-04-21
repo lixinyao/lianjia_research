@@ -34,7 +34,7 @@ sidebar = dashboardSidebar(
                        menuSubItem("北京",tabName = "macro_2",icon = icon("angle-double-right"))
               ),
               menuItem("链家房地产数据",tabName = "lianjia_data",icon = icon("dashboard"),
-                       menuSubItem("SE二手房",tabName = "se_secondhand_house",icon = icon("angle-double-right")),
+                       menuSubItem("SE成交",tabName = "se_secondhand_house",icon = icon("angle-double-right")),
                        menuSubItem("新房",tabName = "new_house",icon = icon("angle-double-right"))
               ),
               menuItem("关于我们",tabName = "widgets",icon = icon("question"))
@@ -47,8 +47,10 @@ body = dashboardBody(
       tabName = "se_secondhand_house",
       fluidRow(
         column(width = 12,
-               tabBox(width = NULL,
+               tabBox(width = 3,
                       tabPanel(h5("筛选条件"),
+                               selectInput("select1",label = h5("选择城市"), 
+                                           choices = unique(mydata$城市), selected = "北京"),
                                dateRangeInput("dates",label = h5("选择日期"),language = "zh-CN"),
                                checkboxGroupInput("indicators",label = h5("选择指标"),
                                                   choices = names(mydata),
@@ -58,13 +60,17 @@ body = dashboardBody(
                                radioButtons("format","文档格式",c("Excel","PDF","HTML","Word"),
                                             inline = TRUE),
                                downloadButton("downloadReport")
-                      ),
+                      )
+               ),
+               tabBox(width = 9,
                       tabPanel(h5("数据"),
-                               DT::dataTableOutput('table'))
-               )))
+                        DT::dataTableOutput('table')),
+                      tabPanel(h5("图形")
+                               )
+               ))
     )
   )
-)
+))
 # UI
 ui = dashboardPage(header,sidebar,body)
 shinyApp(ui,server)
