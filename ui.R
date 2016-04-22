@@ -34,7 +34,7 @@ sidebar = dashboardSidebar(
                        menuSubItem("北京",tabName = "macro_2",icon = icon("angle-double-right"))
               ),
               menuItem("链家房地产数据",tabName = "lianjia_data",icon = icon("dashboard"),
-                       menuSubItem("SE成交",tabName = "se_secondhand_house",icon = icon("angle-double-right")),
+                       menuSubItem("SE房源",tabName = "se_secondhand_house",icon = icon("angle-double-right")),
                        menuSubItem("新房",tabName = "new_house",icon = icon("angle-double-right"))
               ),
               menuItem("关于我们",tabName = "widgets",icon = icon("question"))
@@ -51,10 +51,12 @@ body = dashboardBody(
                       tabPanel(h5("筛选条件"),
                                selectInput("select1",label = h5("选择城市"), 
                                            choices = unique(mydata$城市), selected = "北京"),
-                               dateRangeInput("dates",label = h5("选择日期"),language = "zh-CN"),
-                               checkboxGroupInput("indicators",label = h5("选择指标"),
+                               dateRangeInput("dates1",label = h5("选择日期"),language = "zh-CN"),
+                               selectInput("select2",label = h5("委托类型"), 
+                                           choices = unique(mydata$委托类型), selected = "出售"),
+                               checkboxGroupInput("indicators1",label = h5("选择指标"),
                                                   choices = names(mydata),
-                                                  selected="房源编号"),
+                                                  selected = c("城市","录入日期","委托类型","委托量")),
                                submitButton("确定")),
                       tabPanel(h5("下载"),
                                radioButtons("format","文档格式",c("Excel","PDF","HTML","Word"),
@@ -63,10 +65,10 @@ body = dashboardBody(
                       )
                ),
                tabBox(width = 9,
-                      tabPanel(h5("数据"),
+                      tabPanel(h5("报表"),
                         DT::dataTableOutput('table')),
-                      tabPanel(h5("图形")
-                               )
+                      tabPanel(h5("图形")),
+                      tabPanel(h5("数据挖掘"))
                ))
     )
   )
