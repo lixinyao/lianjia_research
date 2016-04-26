@@ -76,8 +76,7 @@ body = dashboardBody(
                         DT::dataTableOutput('table1')),
                       tabPanel(h5("图形"),
                         plotOutput('plot1',width = "70%",height = "350px"),
-                        plotOutput('plot2',width = "70%",height = "350px"),
-                        plotOutput('plot3',width = "70%",height = "350px")
+                        plotOutput('plot2',width = "70%",height = "350px")
                         ),
                       tabPanel(h5("数据挖掘"))
                ))
