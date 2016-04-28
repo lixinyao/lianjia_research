@@ -11,7 +11,8 @@ con1 = dbConnect(RMySQL::MySQL(),
                  username = 'lixinyao',
                  password = 'lixin131820',
                  host = '127.0.0.1')# 设置连接
-res1 = dbSendQuery(con1,"select 城市,录入时间2 as 录入日期,委托类型,
+res1 = dbSendQuery(con1,"select 城市,录入时间2 as 录入日期,
+                   录入时间2 as 录入日期2,委托类型,
                    count(房源编号) as 委托量,
                    avg(case when 建筑面积 > 4 and 建筑面积 < 50000
                        and 房屋用途 in ('别墅','公寓','经济适用房','普通住宅')
@@ -27,34 +28,83 @@ res1 = dbSendQuery(con1,"select 城市,录入时间2 as 录入日期,委托类�
                    group by 城市,录入日期,委托类型
                    order by 城市,录入日期;")# 查询
 mydata1 = dbFetch(res1,n=-1)
+dbClearResult(res1)
+res2 = dbSendQuery(con1,"select 城市,date_format(录入时间2,'%Y%m') as 录入月,
+                   录入时间2 as 录入日期2,委托类型,
+                   count(房源编号) as 委托量,
+                   avg(case when 建筑面积 > 4 and 建筑面积 < 50000
+                   and 房屋用途 in ('别墅','公寓','经济适用房','普通住宅')
+                   and 建成年代 > 1900
+                   and 室数 < 9
+                   and 总价/建筑面积 > 1 and 总价/建筑面积 < 15
+                   then 总价/建筑面积 else 0 end)*10000 as 平均委托单价,
+                   avg(case when 建筑面积 > 4 and 建筑面积 < 50000 
+                   and 建成年代 > 1900
+                   and 室数 < 9
+                   then 建筑面积 else 0 end) as 平均建筑面积
+                   from SE房源
+                   group by 城市,录入月,委托类型
+                   order by 城市,录入月;")# 查询
+mydata2 = dbFetch(res2,n=-1)
+dbClearResult(res2)
+res3 = dbSendQuery(con1,"select 城市,yearweek(录入时间2) as 录入周,
+                   录入时间2 as 录入日期2,委托类型,
+                   count(房源编号) as 委托量,
+                   avg(case when 建筑面积 > 4 and 建筑面积 < 50000
+                   and 房屋用途 in ('别墅','公寓','经济适用房','普通住宅')
+                   and 建成年代 > 1900
+                   and 室数 < 9
+                   and 总价/建筑面积 > 1 and 总价/建筑面积 < 15
+                   then 总价/建筑面积 else 0 end)*10000 as 平均委托单价,
+                   avg(case when 建筑面积 > 4 and 建筑面积 < 50000 
+                   and 建成年代 > 1900
+                   and 室数 < 9
+                   then 建筑面积 else 0 end) as 平均建筑面积
+                   from SE房源
+                   group by 城市,录入周,委托类型
+                   order by 城市,录入周;")# 查询
+mydata3 = dbFetch(res3,n=-1)
+dbClearResult(res3)
+selecttime = function(select3){
+  if (select3 == "月数据"){
+    data1 = mydata2
+  }
+  if(select3 == "周数据"){
+    data1 = mydata3
+  }
+  if(select3 == "日数据"){
+    data1 = mydata1
+  }
+  data1
+}
 server = function(input,output){
   output$table1 = DT::renderDataTable(DT::datatable({
-    data1 = mydata1
+    data1 = selecttime(input$select3)
     data1 = subset(data1,data1$城市==input$select1)
-    data1$录入日期 = as.Date(data1$录入日期,"%Y-%m-%d")
-    data1 = subset(data1,data1$录入日期 >= input$dates1[1] &
-                     data1$录入日期 < input$dates1[2])
+    data1$录入日期2 = as.Date(data1$录入日期2,"%Y-%m-%d")
+    data1 = subset(data1,data1$录入日期2 >= input$dates1[1] &
+                     data1$录入日期2 <= input$dates1[2])
     data1 = subset(data1,data1$委托类型==input$select2)
     data1 = subset(data1,select=input$indicators1)
   }))
   output$plot1 = renderPlot({
-    data1 = mydata1
+    data1 = selecttime(input$select3)
     data1 = subset(data1,data1$城市==input$select1)
-    data1$录入日期 = as.Date(data1$录入日期,"%Y-%m-%d")
-    data1 = subset(data1,data1$录入日期 >= input$dates1[1] &
-                     data1$录入日期 <= input$dates1[2])
+    data1$录入日期2 = as.Date(data1$录入日期2,"%Y-%m-%d")
+    data1 = subset(data1,data1$录入日期2 >= input$dates1[1] &
+                     data1$录入日期2 <= input$dates1[2])
     data1 = subset(data1,data1$委托类型==input$select2)
     data1 = subset(data1,select=input$indicators1)
-    p1 = ggplot(data = data1,aes(录入日期,委托量)) + 
+    p1 = ggplot(data = data1,aes(data1[,2],委托量)) + 
       geom_bar(fill="#009A60",stat = "identity") + 
       ylim(0,max(data1$委托量) * 1.3) +
-      labs(title="SE房源委托量及平均委托单价",x="日期",y="委托量") +
+      labs(title="SE房源委托量及平均委托单价",x="时间",y="委托量") +
       theme_bw(base_family = "STHeiti")
-    p2 = ggplot(data = data1,aes(录入日期,平均委托单价,group=1)) + 
+    p2 = ggplot(data = data1,aes(data1[,2],平均委托单价,group=1)) + 
       geom_line(color="#E0E123",size=1) +
       geom_point(color="#E0E123",fill="#ffffff",size=2) +
       ylim(min(data1$平均委托单价) * 0.95,max(data1$平均委托单价) * 1.05) +
-      labs(x="日期",y="元/平米") +
+      labs(x="时间",y="元/平米") +
       theme_bw(base_family = "STHeiti") %+replace%
       theme(panel.grid=element_blank(),panel.background = element_rect(fill = NA))
     g1 = ggplot_gtable(ggplot_build(p1))
@@ -82,16 +132,16 @@ server = function(input,output){
     grid.draw(g)
   })
   output$plot2 = renderPlot({
-    data1 = mydata1
+    data1 = selecttime(input$select3)
     data1 = subset(data1,data1$城市==input$select1)
-    data1$录入日期 = as.Date(data1$录入日期,"%Y-%m-%d")
-    data1 = subset(data1,data1$录入日期 >= input$dates1[1] &
-                     data1$录入日期 <= input$dates1[2])
+    data1$录入日期2 = as.Date(data1$录入日期2,"%Y-%m-%d")
+    data1 = subset(data1,data1$录入日期2 >= input$dates1[1] &
+                     data1$录入日期2 <= input$dates1[2])
     data1 = subset(data1,data1$委托类型==input$select2)
     data1 = subset(data1,select=input$indicators1)
-    ggplot(data = data1,aes(录入日期,平均建筑面积,group=1)) + 
+    ggplot(data = data1,aes(data1[,2],平均建筑面积,group=1)) + 
       geom_line(color="#009A60") +
-      labs(title="SE房源委托平均建筑面积",x="日期",y="平米") +
+      labs(title="SE房源委托平均建筑面积",x="时间",y="平米") +
       theme_bw(base_family = "STHeiti")
   })
 }
